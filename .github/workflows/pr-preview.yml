@@ -32,9 +32,14 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push driver image
+      - name: Build and push driver service image
         run: |
-          IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/hotrod-driver:${{ github.head_ref }}
-          echo "Building and pushing $IMAGE_NAME"
-          docker build --platform linux/amd64 -t $IMAGE_NAME -f Dockerfile .
-          docker push $IMAGE_NAME
+            IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/hotrod-driver:${{ github.head_ref }}
+            echo "Building and pushing $IMAGE_NAME"
+            docker build \
+            --platform linux/amd64 \
+            --build-arg TARGETPLATFORM=linux/amd64 \
+            --build-arg SERVICE=driver \
+            -t $IMAGE_NAME \
+            -f Dockerfile .
+            docker push $IMAGE_NAME
