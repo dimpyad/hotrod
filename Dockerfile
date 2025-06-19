@@ -1,8 +1,8 @@
 FROM golang:1.22-alpine
 
-ARG TARGETPLATFORM
-
-COPY dist/$TARGETPLATFORM/bin/hotrod /app/hotrod
+COPY ./dist/linux/amd64/bin/hotrod /app/hotrod
 
 ENTRYPOINT ["/app/hotrod"]
+
+
 
