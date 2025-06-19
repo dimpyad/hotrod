@@ -21,7 +21,7 @@ jobs:
       - name: Build hotrod binary
         run: |
           mkdir -p dist/linux/amd64/bin
-          GOOS=linux GOARCH=amd64 go build -o dist/linux/amd64/bin/hotrod ./cmd/hotrod
+          GOOS=linux GOARCH=amd64 go build -o dist/linux/amd64/bin/hotrod ./cmd/driver
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
