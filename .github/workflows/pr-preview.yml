@@ -23,6 +23,10 @@ jobs:
           mkdir -p dist/linux/amd64/bin
           GOOS=linux GOARCH=amd64 go build -o dist/linux/amd64/bin/hotrod ./cmd/hotrod
 
+      - name: Verify binary exists before Docker build
+        run: |
+          ls -lh dist/linux/amd64/bin/hotrod
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
