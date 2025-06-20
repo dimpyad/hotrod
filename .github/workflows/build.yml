@@ -98,7 +98,7 @@ jobs:
     if: ${{ github.event_name == 'pull_request' && needs.changes.outputs.route == 'true' }}
     needs: [ build, changes ]
     env:
-      SIGNADOT_ORG: signadot
+      SIGNADOT_ORG: ${{ secrets.SIGNADOT_ORG }}
       SIGNADOT_API_KEY: ${{ secrets.SIGNADOT_API_KEY }}
       SANDBOX_IMAGE_TAG: ${{ github.sha }}-linux-amd64
       SANDBOX_NAME: pr-${{ github.event.number }}-route
@@ -177,7 +177,7 @@ jobs:
     if: ${{ github.event_name == 'pull_request' && needs.changes.outputs.frontend == 'true' }}
     needs: [ build, changes ]
     env:
-      SIGNADOT_ORG: signadot
+      SIGNADOT_ORG: ${{ secrets.SIGNADOT_ORG }}
       SIGNADOT_API_KEY: ${{ secrets.SIGNADOT_API_KEY }}
       SANDBOX_IMAGE_TAG: ${{ github.sha }}-linux-amd64
       SANDBOX_NAME: pr-${{ github.event.number }}-frontend
@@ -230,7 +230,7 @@ jobs:
     if: ${{ github.event_name == 'pull_request' && needs.changes.outputs.location == 'true' }}
     needs: [ build, changes ]
     env:
-      SIGNADOT_ORG: signadot
+      SIGNADOT_ORG: ${{ secrets.SIGNADOT_ORG }}
       SIGNADOT_API_KEY: ${{ secrets.SIGNADOT_API_KEY }}
       SANDBOX_IMAGE_TAG: ${{ github.sha }}-linux-amd64
       SANDBOX_NAME: pr-${{ github.event.number }}-location
@@ -284,7 +284,7 @@ jobs:
     if: ${{ github.event_name == 'pull_request' && needs.changes.outputs.driver == 'true' }}
     needs: [ build, changes ]
     env:
-      SIGNADOT_ORG: signadot
+      SIGNADOT_ORG: ${{ secrets.SIGNADOT_ORG }}
       SIGNADOT_API_KEY: ${{ secrets.SIGNADOT_API_KEY }}
       SANDBOX_IMAGE_TAG: ${{ github.sha }}-linux-amd64
       SANDBOX_NAME: pr-${{ github.event.number }}-driver
