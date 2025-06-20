@@ -3,7 +3,7 @@ spec:
   description: sandbox for "@{service}" service
   cluster: "@{cluster}"
   labels:
-    signadot/github-repo: "signadot/hotrod"
+    signadot/github-repo: "dimpyad/hotrod"
     signadot/github-pull-request: "@{github-pr}"
     branch: "@{branch}"
   forks:
