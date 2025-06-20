@@ -99,6 +99,7 @@ jobs:
     needs: [ build, changes ]
     env:
       SIGNADOT_ORG: ${{ secrets.SIGNADOT_ORG }}
+      SIGNADOT_CLUSTER: ${{ secrets.SIGNADOT_CLUSTER }} 
       SIGNADOT_API_KEY: ${{ secrets.SIGNADOT_API_KEY }}
       SANDBOX_IMAGE_TAG: ${{ github.sha }}-linux-amd64
       SANDBOX_NAME: pr-${{ github.event.number }}-route
@@ -134,6 +135,7 @@ jobs:
           echo "Creating sandbox ${SANDBOX_NAME}..."
           signadot sandbox apply \
             --set name=${SANDBOX_NAME} \
+            --set cluster=${SIGNADOT_CLUSTER} \
             --set github-pr=${{ github.event.number }} \
             --set image=signadot/hotrod:${SANDBOX_IMAGE_TAG} \
             --set branch=${{ github.head_ref }} \
@@ -178,6 +180,7 @@ jobs:
     needs: [ build, changes ]
     env:
       SIGNADOT_ORG: ${{ secrets.SIGNADOT_ORG }}
+      SIGNADOT_CLUSTER: ${{ secrets.SIGNADOT_CLUSTER }} 
       SIGNADOT_API_KEY: ${{ secrets.SIGNADOT_API_KEY }}
       SANDBOX_IMAGE_TAG: ${{ github.sha }}-linux-amd64
       SANDBOX_NAME: pr-${{ github.event.number }}-frontend
@@ -213,6 +216,7 @@ jobs:
           echo "Creating sandbox ${SANDBOX_NAME}..."
           signadot sandbox apply \
             --set name=${SANDBOX_NAME} \
+            --set cluster=${SIGNADOT_CLUSTER} \
             --set github-pr=${{ github.event.number }} \
             --set image=signadot/hotrod:${SANDBOX_IMAGE_TAG} \
             --set branch=${{ github.head_ref }} \
@@ -231,6 +235,7 @@ jobs:
     needs: [ build, changes ]
     env:
       SIGNADOT_ORG: ${{ secrets.SIGNADOT_ORG }}
+      SIGNADOT_CLUSTER: ${{ secrets.SIGNADOT_CLUSTER }} 
       SIGNADOT_API_KEY: ${{ secrets.SIGNADOT_API_KEY }}
       SANDBOX_IMAGE_TAG: ${{ github.sha }}-linux-amd64
       SANDBOX_NAME: pr-${{ github.event.number }}-location
@@ -266,6 +271,7 @@ jobs:
           echo "Creating sandbox ${SANDBOX_NAME}..."
           signadot sandbox apply \
             --set name=${SANDBOX_NAME} \
+            --set cluster=${SIGNADOT_CLUSTER} \
             --set github-pr=${{ github.event.number }} \
             --set image=signadot/hotrod:${SANDBOX_IMAGE_TAG} \
             --set branch=${{ github.head_ref }} \
@@ -285,6 +291,7 @@ jobs:
     needs: [ build, changes ]
     env:
       SIGNADOT_ORG: ${{ secrets.SIGNADOT_ORG }}
+      SIGNADOT_CLUSTER: ${{ secrets.SIGNADOT_CLUSTER }} 
       SIGNADOT_API_KEY: ${{ secrets.SIGNADOT_API_KEY }}
       SANDBOX_IMAGE_TAG: ${{ github.sha }}-linux-amd64
       SANDBOX_NAME: pr-${{ github.event.number }}-driver
@@ -320,6 +327,7 @@ jobs:
           echo "Creating sandbox ${SANDBOX_NAME}..."
           signadot sandbox apply \
             --set name=${SANDBOX_NAME} \
+            --set cluster=${SIGNADOT_CLUSTER} \
             --set github-pr=${{ github.event.number }} \
             --set image=signadot/hotrod:${SANDBOX_IMAGE_TAG} \
             --set branch=${{ github.head_ref }} \
