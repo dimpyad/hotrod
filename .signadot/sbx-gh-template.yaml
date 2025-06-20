@@ -1,7 +1,7 @@
 name: "@{name}"
 spec:
   description: sandbox for "@{service}" service
-  cluster: demo
+  cluster: "@{cluster}"
   labels:
     signadot/github-repo: "signadot/hotrod"
     signadot/github-pull-request: "@{github-pr}"
