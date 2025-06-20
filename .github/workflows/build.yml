@@ -125,7 +125,7 @@ jobs:
             NAMESPACE="hotrod-devmesh"
           else
             echo "Using default namespace"
-            NAMESPACE="hotrod-istio"
+            NAMESPACE="hotrod"
           fi
           echo "Using namespace=${NAMESPACE}"
           echo "NAMESPACE=${NAMESPACE}" >> "$GITHUB_ENV"
@@ -206,7 +206,7 @@ jobs:
             NAMESPACE="hotrod-devmesh"
           else
             echo "Using default namespace"
-            NAMESPACE="hotrod-istio"
+            NAMESPACE="hotrod"
           fi
           echo "Using namespace=${NAMESPACE}"
           echo "NAMESPACE=${NAMESPACE}" >> "$GITHUB_ENV"
@@ -261,7 +261,7 @@ jobs:
             NAMESPACE="hotrod-devmesh"
           else
             echo "Using default namespace"
-            NAMESPACE="hotrod-istio"
+            NAMESPACE="hotrod"
           fi
           echo "Using namespace=${NAMESPACE}"
           echo "NAMESPACE=${NAMESPACE}" >> "$GITHUB_ENV"
@@ -317,7 +317,7 @@ jobs:
             NAMESPACE="hotrod-devmesh"
           else
             echo "Using default namespace"
-            NAMESPACE="hotrod-istio"
+            NAMESPACE="hotrod"
           fi
           echo "Using namespace=${NAMESPACE}"
           echo "NAMESPACE=${NAMESPACE}" >> "$GITHUB_ENV"
