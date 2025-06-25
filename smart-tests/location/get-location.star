@@ -1,5 +1,5 @@
 res = http.get(
-    url="http://location.hotrod-istio.svc:8081/locations", # can also be cluster internal URLs like http://name.namespace.svc
+    url="http://location.hotrod.svc:8081/locations", # can also be cluster internal URLs like http://name.namespace.svc
     capture=True, # enables SmartDiff
     name="getLocations"
 )
