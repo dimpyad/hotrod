@@ -1,11 +1,11 @@
 name: Go
 on:
-  push:
-    branches: [ main ]
-    tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      run-type:
+        description: 'Reason for running this workflow'
+        required: false
+        default: 'manual'
 env:
   GO_VERSION: "1.22"
 
