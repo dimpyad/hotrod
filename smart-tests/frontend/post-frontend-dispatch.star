@@ -20,7 +20,7 @@ resp = http.post(
     
 # Validate the response
 if resp.status_code != 200:
-    ck.error("Unexpected status code: {}", resp.status_code)
+    ck.error("Unexpected response status code: {}", resp.status_code)
     
 # Parse JSON response
 response_json = resp.json()
