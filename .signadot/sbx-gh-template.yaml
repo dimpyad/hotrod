@@ -15,3 +15,7 @@ spec:
       images:
       - container: hotrod
         image: "@{image}"
+   defaultRouteGroup:
+    endpoints: 
+    - name: frontend-endpoint
+      target: http://frontend.hotrod.svc:8080
