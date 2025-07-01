@@ -143,7 +143,8 @@ func (s *Server) getLocation(w http.ResponseWriter, r *http.Request) {
 			Body:      "Resolving locations",
 		})
 	}
-
+        // Introducting 10 second delay before responding
+	time.Sleep(10 * time.Second) 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(data)
 }
