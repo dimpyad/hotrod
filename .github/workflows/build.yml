@@ -137,7 +137,7 @@ jobs:
             --set name=${SANDBOX_NAME} \
             --set cluster=${SIGNADOT_CLUSTER} \
             --set github-pr=${{ github.event.number }} \
-            --set image=dimpyad/hotrod-route:${SANDBOX_IMAGE_TAG} \
+            --set image=dimpyad/hotrod:${SANDBOX_IMAGE_TAG} \
             --set branch=${{ github.head_ref }} \
             --set service=route \
             --set namespace=${NAMESPACE} \
@@ -273,7 +273,7 @@ jobs:
             --set name=${SANDBOX_NAME} \
             --set cluster=${SIGNADOT_CLUSTER} \
             --set github-pr=${{ github.event.number }} \
-            --set image=dimpyad/hotrod-location:${SANDBOX_IMAGE_TAG} \
+            --set image=dimpyad/hotrod:${SANDBOX_IMAGE_TAG} \
             --set branch=${{ github.head_ref }} \
             --set service=location \
             --set namespace=${NAMESPACE} \
@@ -329,7 +329,7 @@ jobs:
             --set name=${SANDBOX_NAME} \
             --set cluster=${SIGNADOT_CLUSTER} \
             --set github-pr=${{ github.event.number }} \
-            --set image=dimpyad/hotrod-driver:${SANDBOX_IMAGE_TAG} \
+            --set image=dimpyad/hotrod:${SANDBOX_IMAGE_TAG} \
             --set branch=${{ github.head_ref }} \
             --set service=driver \
             --set namespace=${NAMESPACE} \
