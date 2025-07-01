@@ -7,7 +7,7 @@ RELEASE_ARCHES ?= amd64 arm64
 
 DOCKER ?= docker
 IMAGE_REGISTRY ?= docker.io/dimpyad
-IMAGE_NAME ?= hotrod-driver
+IMAGE_NAME ?= hotrod
 FULL_IMAGE := $(IMAGE_REGISTRY)/$(IMAGE_NAME):$(RELEASE_TAG)-$(GOOS)-$(GOARCH)
 
 SHELL = /bin/bash
