@@ -21,6 +21,3 @@ spec:
         target: http://frontend.hotrod.svc:8080
       - name: location-endpoint
         target: http://location.hotrod.svc:8081
-      - name: driver-endpoint
-        target: http://driver.hotrod.svc:8081
-    
