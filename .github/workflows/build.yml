@@ -98,7 +98,8 @@ jobs:
     if: ${{ github.event_name == 'pull_request' && needs.changes.outputs.route == 'true' }}
     needs: [ build, changes ]
     env:
-      SIGNADOT_ORG: signadot
+      SIGNADOT_ORG: ${{ secrets.SIGNADOT_ORG }}
+      SIGNADOT_CLUSTER: ${{ secrets.SIGNADOT_CLUSTER }} 
       SIGNADOT_API_KEY: ${{ secrets.SIGNADOT_API_KEY }}
       SANDBOX_IMAGE_TAG: ${{ github.sha }}-linux-amd64
       SANDBOX_NAME: pr-${{ github.event.number }}-route
@@ -124,7 +125,7 @@ jobs:
             NAMESPACE="hotrod-devmesh"
           else
             echo "Using default namespace"
-            NAMESPACE="hotrod-istio"
+            NAMESPACE="hotrod"
           fi
           echo "Using namespace=${NAMESPACE}"
           echo "NAMESPACE=${NAMESPACE}" >> "$GITHUB_ENV"
@@ -134,8 +135,9 @@ jobs:
           echo "Creating sandbox ${SANDBOX_NAME}..."
           signadot sandbox apply \
             --set name=${SANDBOX_NAME} \
+            --set cluster=${SIGNADOT_CLUSTER} \
             --set github-pr=${{ github.event.number }} \
-            --set image=signadot/hotrod:${SANDBOX_IMAGE_TAG} \
+            --set image=dimpyad/hotrod:${SANDBOX_IMAGE_TAG} \
             --set branch=${{ github.head_ref }} \
             --set service=route \
             --set namespace=${NAMESPACE} \
@@ -177,7 +179,8 @@ jobs:
     if: ${{ github.event_name == 'pull_request' && needs.changes.outputs.frontend == 'true' }}
     needs: [ build, changes ]
     env:
-      SIGNADOT_ORG: signadot
+      SIGNADOT_ORG: ${{ secrets.SIGNADOT_ORG }}
+      SIGNADOT_CLUSTER: ${{ secrets.SIGNADOT_CLUSTER }} 
       SIGNADOT_API_KEY: ${{ secrets.SIGNADOT_API_KEY }}
       SANDBOX_IMAGE_TAG: ${{ github.sha }}-linux-amd64
       SANDBOX_NAME: pr-${{ github.event.number }}-frontend
@@ -203,7 +206,7 @@ jobs:
             NAMESPACE="hotrod-devmesh"
           else
             echo "Using default namespace"
-            NAMESPACE="hotrod-istio"
+            NAMESPACE="hotrod"
           fi
           echo "Using namespace=${NAMESPACE}"
           echo "NAMESPACE=${NAMESPACE}" >> "$GITHUB_ENV"
@@ -213,8 +216,9 @@ jobs:
           echo "Creating sandbox ${SANDBOX_NAME}..."
           signadot sandbox apply \
             --set name=${SANDBOX_NAME} \
+            --set cluster=${SIGNADOT_CLUSTER} \
             --set github-pr=${{ github.event.number }} \
-            --set image=signadot/hotrod:${SANDBOX_IMAGE_TAG} \
+            --set image=dimpyad/hotrod-frontend:${SANDBOX_IMAGE_TAG} \
             --set branch=${{ github.head_ref }} \
             --set service=frontend \
             --set namespace=${NAMESPACE} \
@@ -230,7 +234,8 @@ jobs:
     if: ${{ github.event_name == 'pull_request' && needs.changes.outputs.location == 'true' }}
     needs: [ build, changes ]
     env:
-      SIGNADOT_ORG: signadot
+      SIGNADOT_ORG: ${{ secrets.SIGNADOT_ORG }}
+      SIGNADOT_CLUSTER: ${{ secrets.SIGNADOT_CLUSTER }} 
       SIGNADOT_API_KEY: ${{ secrets.SIGNADOT_API_KEY }}
       SANDBOX_IMAGE_TAG: ${{ github.sha }}-linux-amd64
       SANDBOX_NAME: pr-${{ github.event.number }}-location
@@ -256,7 +261,7 @@ jobs:
             NAMESPACE="hotrod-devmesh"
           else
             echo "Using default namespace"
-            NAMESPACE="hotrod-istio"
+            NAMESPACE="hotrod"
           fi
           echo "Using namespace=${NAMESPACE}"
           echo "NAMESPACE=${NAMESPACE}" >> "$GITHUB_ENV"
@@ -266,25 +271,22 @@ jobs:
           echo "Creating sandbox ${SANDBOX_NAME}..."
           signadot sandbox apply \
             --set name=${SANDBOX_NAME} \
+            --set cluster=${SIGNADOT_CLUSTER} \
             --set github-pr=${{ github.event.number }} \
-            --set image=signadot/hotrod:${SANDBOX_IMAGE_TAG} \
+            --set image=dimpyad/hotrod:${SANDBOX_IMAGE_TAG} \
             --set branch=${{ github.head_ref }} \
             --set service=location \
             --set namespace=${NAMESPACE} \
             -f - \
             < ${GITHUB_WORKSPACE}/.signadot/sbx-gh-template.yaml
 
-
-      - name: Run Smart Tests
-        run: |
-          signadot st run --sandbox=${SANDBOX_NAME} --publish
-
   sandbox-driver:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'pull_request' && needs.changes.outputs.driver == 'true' }}
     needs: [ build, changes ]
     env:
-      SIGNADOT_ORG: signadot
+      SIGNADOT_ORG: ${{ secrets.SIGNADOT_ORG }}
+      SIGNADOT_CLUSTER: ${{ secrets.SIGNADOT_CLUSTER }} 
       SIGNADOT_API_KEY: ${{ secrets.SIGNADOT_API_KEY }}
       SANDBOX_IMAGE_TAG: ${{ github.sha }}-linux-amd64
       SANDBOX_NAME: pr-${{ github.event.number }}-driver
@@ -310,7 +312,7 @@ jobs:
             NAMESPACE="hotrod-devmesh"
           else
             echo "Using default namespace"
-            NAMESPACE="hotrod-istio"
+            NAMESPACE="hotrod"
           fi
           echo "Using namespace=${NAMESPACE}"
           echo "NAMESPACE=${NAMESPACE}" >> "$GITHUB_ENV"
@@ -320,8 +322,9 @@ jobs:
           echo "Creating sandbox ${SANDBOX_NAME}..."
           signadot sandbox apply \
             --set name=${SANDBOX_NAME} \
+            --set cluster=${SIGNADOT_CLUSTER} \
             --set github-pr=${{ github.event.number }} \
-            --set image=signadot/hotrod:${SANDBOX_IMAGE_TAG} \
+            --set image=dimpyad/hotrod:${SANDBOX_IMAGE_TAG} \
             --set branch=${{ github.head_ref }} \
             --set service=driver \
             --set namespace=${NAMESPACE} \
