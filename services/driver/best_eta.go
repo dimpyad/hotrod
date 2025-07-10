@@ -57,7 +57,7 @@ func (eta *bestETA) Get(ctx context.Context, dispatchReq *DispatchRequest,
 			return nil, result.err
 		}
 		if result.route.ETA < resp.ETA {
-			resp.ETA = result.route.ETA
+			resp.ETA = -1
 			resp.DriverID = result.driverID
 		}
 	}
