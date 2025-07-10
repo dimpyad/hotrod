@@ -27,8 +27,8 @@ type bestETA struct {
 
 // Response contains ETA for a trip.
 type Response struct {
-	DriverID string
-	ETA      time.Duration
+	DriverIdentifier string        // 🔥 changed from `DriverID` to `DriverIdentifier`
+	ETA              time.Duration
 }
 
 func newBestETA(tracerProvider trace.TracerProvider, tracer trace.Tracer, logger log.Factory) *bestETA {
@@ -58,17 +58,17 @@ func (eta *bestETA) Get(ctx context.Context, dispatchReq *DispatchRequest,
 		}
 		if result.route.ETA < resp.ETA {
 			resp.ETA = result.route.ETA
-			resp.DriverID = result.driverID
+			resp.DriverIdentifier = result.driverID
 		}
 	}
-	if resp.DriverID == "" {
+	if resp.DriverIdentifier == "" {
 		err := errors.New("no routes found")
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 
 	eta.logger.For(ctx).Info("Dispatch successful",
-		zap.String("driverID", resp.DriverID),
+		zap.String("driverID", resp.DriverIdentifier),
 		zap.String("eta", resp.ETA.String()),
 	)
 	return resp, nil
