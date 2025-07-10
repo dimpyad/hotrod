@@ -13,7 +13,7 @@ payload = {
 
 # Send the POST request with capture enabled
 resp = http.post(
-    url="http://frontend.hotrod-istio.svc:8080/dispatch",
+    url="http://frontend.hotrod.svc:8080/dispatch",
     json_body=payload,
     capture=True,
     name="dispatchRequest"
