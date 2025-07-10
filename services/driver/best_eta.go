@@ -27,8 +27,8 @@ type bestETA struct {
 
 // Response contains ETA for a trip.
 type Response struct {
-	DriverIdentifier string        // 🔥 changed from `DriverID` to `DriverIdentifier`
-	ETA              time.Duration
+	DriverID string        `json:"driverIdentifier"` 
+	ETA      time.Duration
 }
 
 func newBestETA(tracerProvider trace.TracerProvider, tracer trace.Tracer, logger log.Factory) *bestETA {
@@ -53,56 +53,4 @@ func (eta *bestETA) Get(ctx context.Context, dispatchReq *DispatchRequest,
 	resp := &Response{ETA: math.MaxInt64}
 	for _, result := range results {
 		if result.err != nil {
-			span.SetStatus(codes.Error, result.err.Error())
-			return nil, result.err
-		}
-		if result.route.ETA < resp.ETA {
-			resp.ETA = result.route.ETA
-			resp.DriverIdentifier = result.driverID
-		}
-	}
-	if resp.DriverIdentifier == "" {
-		err := errors.New("no routes found")
-		span.SetStatus(codes.Error, err.Error())
-		return nil, err
-	}
-
-	eta.logger.For(ctx).Info("Dispatch successful",
-		zap.String("driverID", resp.DriverIdentifier),
-		zap.String("eta", resp.ETA.String()),
-	)
-	return resp, nil
-}
-
-type routeResult struct {
-	driverID string
-	route    *route.Route
-	err      error
-}
-
-// getRoutes calls Route service for each pick location, driver location pair
-func (eta *bestETA) getRoutes(ctx context.Context, pickupLoc *location.Location,
-	drivers []*Driver) []routeResult {
-	results := make([]routeResult, 0, len(drivers))
-	wg := sync.WaitGroup{}
-	routesLock := sync.Mutex{}
-
-	for _, dd := range drivers {
-		wg.Add(1)
-		driver := dd // capture loop var
-		// Use worker pool to (potentially) execute requests in parallel
-		eta.pool.Execute(func() {
-			route, err := eta.route.FindRoute(ctx, driver.Coordinates, pickupLoc.Coordinates)
-			routesLock.Lock()
-			results = append(results, routeResult{
-				driverID: driver.DriverID,
-				route:    route,
-				err:      err,
-			})
-			routesLock.Unlock()
-			wg.Done()
-		})
-	}
-	wg.Wait()
-	return results
-}
+			span.SetStatus(codes.Error, result.err.E
