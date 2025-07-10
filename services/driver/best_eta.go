@@ -28,7 +28,7 @@ type bestETA struct {
 // Response contains ETA for a trip.
 type Response struct {
 	DriverID string
-	ETA      time.Duration
+	ETA      string
 }
 
 func newBestETA(tracerProvider trace.TracerProvider, tracer trace.Tracer, logger log.Factory) *bestETA {
@@ -50,7 +50,7 @@ func (eta *bestETA) Get(ctx context.Context, dispatchReq *DispatchRequest,
 	eta.logger.For(ctx).Info("Found routes", zap.Any("routes", results))
 
 	// search the one with the best ETA
-	resp := &Response{ETA: math.MaxInt64}
+	resp := &Response{ETA: fmt.Sprintf("%d", math.MaxInt64)}
 	for _, result := range results {
 		if result.err != nil {
 			span.SetStatus(codes.Error, result.err.Error())
