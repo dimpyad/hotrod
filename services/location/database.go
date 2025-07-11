@@ -55,36 +55,11 @@ CREATE TABLE IF NOT EXISTS locations
 `
 
 var seed = []Location{
-	{
-		ID:          1,
-		Name:        "My Home",
-		Coordinates: "231,773",
-		Zone:        "green-zone",
-	},
-	{
-		ID:          123,
-		Name:        "Rachel's Floral Designs",
-		Coordinates: "115,277",
-		Zone:        "red-zone",
-	},
-	{
-		ID:          567,
-		Name:        "Amazing Coffee Roasters",
-		Coordinates: "211,653",
-		Zone:        "yellow-zone",
-	},
-	{
-		ID:          392,
-		Name:        "Trom Chocolatier",
-		Coordinates: "577,322",
-		Zone:        "purple-zone",
-	},
-	{
-		ID:          731,
-		Name:        "Japanese Desserts",
-		Coordinates: "728,326",
-		Zone:        "blue-zone",
-	},
+	{ID: 1, Name: "My Home", Coordinates: "231,773", Zone: "green-zone"},
+	{ID: 123, Name: "Rachel's Floral Designs", Coordinates: "115,277", Zone: "red-zone"},
+	{ID: 567, Name: "Amazing Coffee Roasters", Coordinates: "211,653", Zone: "yellow-zone"},
+	{ID: 392, Name: "Trom Chocolatier", Coordinates: "577,322", Zone: "purple-zone"},
+	{ID: 731, Name: "Japanese Desserts", Coordinates: "728,326", Zone: "blue-zone"},
 }
 
 func newDatabase(logger log.Factory) *database {
@@ -109,10 +84,8 @@ func newDatabase(logger log.Factory) *database {
 		tracer: tracing.InitOTEL("mysql", config.GetOtelExporterType(),
 			config.GetMetricsFactory(), logger).Tracer("mysql"),
 		logger: logger,
-		lock: &tracing.Mutex{
-			SessionBaggageKey: "request",
-		},
-		db: db,
+		lock: &tracing.Mutex{SessionBaggageKey: "request"},
+		db:    db,
 	}
 }
 
@@ -123,13 +96,10 @@ func driverConfig() *mysql.Config {
 	dc.DBName = config.GetMySQLDatabaseName()
 	dc.User = config.GetMySQLUser()
 	dc.Passwd = config.GetMySQLPassword()
-
 	dc.Timeout = 60 * time.Second
 	dc.InterpolateParams = true
 	dc.ParseTime = true
-	dc.Params = map[string]string{
-		"time_zone": "'+00:00'",
-	}
+	dc.Params = map[string]string{"time_zone": "'+00:00'"}
 	return dc
 }
 
@@ -155,6 +125,7 @@ func (d *database) List(ctx context.Context) ([]Location, error) {
 		}
 	}
 	defer rows.Close()
+
 	var cs []Location
 	for rows.Next() {
 		c := Location{}
@@ -166,7 +137,6 @@ func (d *database) List(ctx context.Context) ([]Location, error) {
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-
 	return cs, nil
 }
 
@@ -257,8 +227,10 @@ func (d *database) shouldRetry(err error) bool {
 	if mysqlErr, ok := err.(*mysql.MySQLError); ok {
 		switch mysqlErr.Number {
 		case 1146:
-			// Table doesn't exist
 			d.setupDB()
+			return true
+		case 1054:
+			d.migrateSchema()
 			return true
 		}
 	}
@@ -284,4 +256,16 @@ func (d *database) setupDB() {
 		}
 	}
 	stmt.Close()
+}
+
+func (d *database) migrateSchema() {
+	fmt.Println("migrating schema: adding 'zone' column if missing...")
+	_, err := d.db.Exec(`ALTER TABLE locations ADD COLUMN zone VARCHAR(255) DEFAULT NULL`)
+	if err != nil {
+		if mysqlErr, ok := err.(*mysql.MySQLError); ok && mysqlErr.Number == 1060 {
+			// Column already exists
+			return
+		}
+		panic(fmt.Sprintf("failed to migrate schema: %v", err))
+	}
 }
