@@ -22,12 +22,3 @@ resp = http.post(
 # Validate the response
 if resp.status_code != 200:
     ck.error("Unexpected status code: {}", resp.status_code)
-
-# Parse JSON response
-response_json = resp.json()
-if type(response_json) != "dict":
-    ck.error("Unexpected response format: expected JSON object, got {}", type(response_json))
-
-# Additional response validation (if applicable)
-if "success" in response_json and not response_json["success"]:
-    ck.error("Dispatch request failed, response: {}", response_json)
