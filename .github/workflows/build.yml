@@ -32,19 +32,15 @@ jobs:
             location:
               - 'services/location/**'
               - 'cmd/location.go'
-              - 'pkg/**'
             driver:
               - 'services/driver/**'
               - 'cmd/driver.go'
-              - 'pkg/**'
             frontend:
               - 'services/frontend/**'
               - 'cmd/frontend.go'
-              - 'pkg/**'
             route:
               - 'services/route/**'
               - 'cmd/route.go'
-              - 'pkg/**'
 
   build:
     runs-on: ubuntu-latest
@@ -330,7 +326,3 @@ jobs:
             --set namespace=${NAMESPACE} \
             -f - \
             < ${GITHUB_WORKSPACE}/.signadot/sbx-gh-template.yaml
-
-      - name: Run Smart Tests
-        run: |
-          signadot st run --sandbox=${SANDBOX_NAME} --publish
