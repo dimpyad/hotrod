@@ -275,6 +275,9 @@ jobs:
             --set namespace=${NAMESPACE} \
             -f - \
             < ${GITHUB_WORKSPACE}/.signadot/sbx-gh-template.yaml
+      - name: Run Smart Tests
+        run: |
+          signadot st run --sandbox=${SANDBOX_NAME} --publish
 
   sandbox-driver:
     runs-on: ubuntu-latest
