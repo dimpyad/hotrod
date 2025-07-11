@@ -17,6 +17,7 @@ package location
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -32,6 +33,14 @@ import (
 	"github.com/signadot/hotrod/pkg/log"
 	"github.com/signadot/hotrod/pkg/tracing"
 )
+
+// Location represents a record in the locations table
+type Location struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	Coordinates string `json:"coordinates"`
+	Zone        string `json:"zone"`
+}
 
 // database implements a Location repository on top of an SQL database
 type database struct {
@@ -65,10 +74,8 @@ var seed = []Location{
 func newDatabase(logger log.Factory) *database {
 	logger = logger.With(zap.String("component", "database"))
 
-	var (
-		db  *sqlx.DB
-		err error
-	)
+	var db *sqlx.DB
+	var err error
 	ticker := time.NewTicker(time.Second / 3)
 	defer ticker.Stop()
 	for {
@@ -84,8 +91,8 @@ func newDatabase(logger log.Factory) *database {
 		tracer: tracing.InitOTEL("mysql", config.GetOtelExporterType(),
 			config.GetMetricsFactory(), logger).Tracer("mysql"),
 		logger: logger,
-		lock: &tracing.Mutex{SessionBaggageKey: "request"},
-		db:    db,
+		lock:   &tracing.Mutex{SessionBaggageKey: "request"},
+		db:     db,
 	}
 }
 
@@ -96,10 +103,13 @@ func driverConfig() *mysql.Config {
 	dc.DBName = config.GetMySQLDatabaseName()
 	dc.User = config.GetMySQLUser()
 	dc.Passwd = config.GetMySQLPassword()
+
 	dc.Timeout = 60 * time.Second
 	dc.InterpolateParams = true
 	dc.ParseTime = true
-	dc.Params = map[string]string{"time_zone": "'+00:00'"}
+	dc.Params = map[string]string{
+		"time_zone": "'+00:00'",
+	}
 	return dc
 }
 
@@ -126,47 +136,54 @@ func (d *database) List(ctx context.Context) ([]Location, error) {
 	}
 	defer rows.Close()
 
-	var cs []Location
+	var results []Location
 	for rows.Next() {
-		c := Location{}
-		if err := rows.Scan(&c.ID, &c.Name, &c.Coordinates, &c.Zone); err != nil {
+		var id int64
+		var name, coordinates string
+		var zone sql.NullString
+
+		if err := rows.Scan(&id, &name, &coordinates, &zone); err != nil {
 			return nil, err
 		}
-		cs = append(cs, c)
+
+		results = append(results, Location{
+			ID:          id,
+			Name:        name,
+			Coordinates: coordinates,
+			Zone:        nullStringToString(zone),
+		})
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-	return cs, nil
+
+	return results, nil
 }
 
 func (d *database) Create(ctx context.Context, location *Location) (int64, error) {
 	query := "INSERT INTO locations SET name = ?, coordinates = ?, zone = ?"
-	res, err := d.db.Exec(query, location.Name, location.Coordinates, location.Zone)
+	res, err := d.db.Exec(query, location.Name, location.Coordinates, nullable(location.Zone))
 	if err != nil {
 		if !d.shouldRetry(err) {
 			return 0, err
 		}
-		res, err = d.db.Exec(query, location.Name, location.Coordinates, location.Zone)
+		res, err = d.db.Exec(query, location.Name, location.Coordinates, nullable(location.Zone))
 		if err != nil {
 			return 0, err
 		}
 	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		return 0, err
-	}
-	return id, nil
+	return res.LastInsertId()
 }
 
 func (d *database) Update(ctx context.Context, location *Location) error {
 	query := "UPDATE locations SET name = ?, coordinates = ?, zone = ? WHERE id = ?"
-	res, err := d.db.Exec(query, location.Name, location.Coordinates, location.Zone, location.ID)
+	res, err := d.db.Exec(query, location.Name, location.Coordinates, nullable(location.Zone), location.ID)
 	if err != nil {
 		if !d.shouldRetry(err) {
 			return err
 		}
-		res, err = d.db.Exec(query, location.Name, location.Coordinates, location.Zone, location.ID)
+		res, err = d.db.Exec(query, location.Name, location.Coordinates, nullable(location.Zone), location.ID)
 		if err != nil {
 			return err
 		}
@@ -193,44 +210,39 @@ func (d *database) Get(ctx context.Context, locationID int) (*Location, error) {
 
 	delay.Sleep(config.GetMySQLGetDelay(), config.GetMySQLGetDelayStdDev())
 
-	var c Location
 	query := "SELECT id, name, coordinates, zone FROM locations WHERE id = ?"
 	row := d.db.QueryRow(query, locationID)
-	if row.Err() != nil {
-		if !d.shouldRetry(row.Err()) {
-			return nil, row.Err()
-		}
-		row = d.db.QueryRow(query, locationID)
-		if row.Err() != nil {
-			return nil, row.Err()
-		}
-	}
-	if err := row.Scan(&c.ID, &c.Name, &c.Coordinates, &c.Zone); err != nil {
+
+	var id int64
+	var name, coordinates string
+	var zone sql.NullString
+
+	if err := row.Scan(&id, &name, &coordinates, &zone); err != nil {
 		return nil, err
 	}
-	return &c, nil
+
+	return &Location{
+		ID:          id,
+		Name:        name,
+		Coordinates: coordinates,
+		Zone:        nullStringToString(zone),
+	}, nil
 }
 
 func (d *database) Delete(ctx context.Context, locationID int) error {
 	query := "DELETE FROM locations WHERE id = ?"
 	_, err := d.db.Exec(query, locationID)
-	if err != nil {
-		if !d.shouldRetry(err) {
-			return err
-		}
-		err = nil
+	if err != nil && !d.shouldRetry(err) {
+		return err
 	}
-	return err
+	return nil
 }
 
 func (d *database) shouldRetry(err error) bool {
 	if mysqlErr, ok := err.(*mysql.MySQLError); ok {
 		switch mysqlErr.Number {
-		case 1146:
+		case 1146: // Table doesn't exist
 			d.setupDB()
-			return true
-		case 1054:
-			d.migrateSchema()
 			return true
 		}
 	}
@@ -249,8 +261,7 @@ func (d *database) setupDB() {
 	if err != nil {
 		panic(err)
 	}
-	for i := range seed {
-		c := &seed[i]
+	for _, c := range seed {
 		if _, err := stmt.Exec(c.ID, c.Name, c.Coordinates, c.Zone); err != nil {
 			panic(err)
 		}
@@ -258,14 +269,18 @@ func (d *database) setupDB() {
 	stmt.Close()
 }
 
-func (d *database) migrateSchema() {
-	fmt.Println("migrating schema: adding 'zone' column if missing...")
-	_, err := d.db.Exec(`ALTER TABLE locations ADD COLUMN zone VARCHAR(255) DEFAULT NULL`)
-	if err != nil {
-		if mysqlErr, ok := err.(*mysql.MySQLError); ok && mysqlErr.Number == 1060 {
-			// Column already exists
-			return
-		}
-		panic(fmt.Sprintf("failed to migrate schema: %v", err))
+// helper to convert sql.NullString to plain string
+func nullStringToString(ns sql.NullString) string {
+	if ns.Valid {
+		return ns.String
 	}
+	return ""
+}
+
+// helper to convert string to interface{} with null support
+func nullable(s string) interface{} {
+	if s == "" {
+		return nil
+	}
+	return s
 }
