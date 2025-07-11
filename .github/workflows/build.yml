@@ -326,19 +326,31 @@ jobs:
             --set namespace=${NAMESPACE} \
             -f - \
             < ${GITHUB_WORKSPACE}/.signadot/sbx-gh-template.yaml
+    
   run-contract-tests:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    needs: [ sandbox-driver, sandbox-location ]
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - name: Run Contract Tests
-        run: |
-          echo "Running frontend and location contract tests after driver and location sandboxes are ready..."
-          signadot st run --sandbox=${SANDBOX_NAME} --publish
+      runs-on: ubuntu-latest
+      if: github.event_name == 'pull_request'
+      needs: [ sandbox-driver, sandbox-location ]
+      env:
+        SIGNADOT_ORG: ${{ secrets.SIGNADOT_ORG }}
+        SIGNADOT_CLUSTER: ${{ secrets.SIGNADOT_CLUSTER }} 
+        SIGNADOT_API_KEY: ${{ secrets.SIGNADOT_API_KEY }}
+        SANDBOX_NAME: pr-${{ github.event.number }}-driver  # or any stable reference
+      steps:
+        - uses: actions/checkout@v3
+  
+        - name: Set up Go
+          uses: actions/setup-go@v2
+          with:
+            go-version: ${{ env.GO_VERSION }}
+  
+        - name: Set up Signadot CLI
+          run: |
+            curl -sSLf https://raw.githubusercontent.com/signadot/cli/main/scripts/install.sh | sh
+  
+        - name: Run Contract Tests
+          run: |
+            echo "Running frontend and location contract tests after driver and location sandboxes are ready..."
+            # Update sandbox names here if needed
+            signadot st run --sandbox=pr-${{ github.event.number }}-driver --publish
+            signadot st run --sandbox=pr-${{ github.event.number }}-location --publish
