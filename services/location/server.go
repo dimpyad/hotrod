@@ -92,6 +92,11 @@ func (s *Server) listLocations(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Inject safe breaking field
+	for i := range locations {
+		locations[i].Zone = "blue-zone"
+	}
+
 	data, err := json.Marshal(locations)
 	if httperr.HandleError(w, err, http.StatusInternalServerError) {
 		s.logger.For(ctx).Error("cannot marshal response", zap.Error(err))
@@ -122,6 +127,9 @@ func (s *Server) getLocation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Inject safe breaking field
+	response.Zone = "blue-zone"
+
 	data, err := json.Marshal(response)
 	if httperr.HandleError(w, err, http.StatusInternalServerError) {
 		s.logger.For(ctx).Error("cannot marshal response", zap.Error(err))
@@ -143,7 +151,7 @@ func (s *Server) getLocation(w http.ResponseWriter, r *http.Request) {
 			Body:      "Resolving locations",
 		})
 	}
- 
+
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(data)
 }
@@ -167,7 +175,6 @@ func (s *Server) createLocation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// marshal response
 	data, err := json.Marshal(loc)
 	if httperr.HandleError(w, err, http.StatusInternalServerError) {
 		s.logger.For(ctx).Error("cannot marshal response", zap.Error(err))
