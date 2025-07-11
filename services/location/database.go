@@ -34,14 +34,6 @@ import (
 	"github.com/signadot/hotrod/pkg/tracing"
 )
 
-// Location represents a record in the locations table
-type Location struct {
-	ID          int64  `json:"id"`
-	Name        string `json:"name"`
-	Coordinates string `json:"coordinates"`
-	Zone        string `json:"zone"`
-}
-
 // database implements a Location repository on top of an SQL database
 type database struct {
 	tracer trace.Tracer
