@@ -275,9 +275,6 @@ jobs:
             --set namespace=${NAMESPACE} \
             -f - \
             < ${GITHUB_WORKSPACE}/.signadot/sbx-gh-template.yaml
-      - name: Run Smart Tests
-        run: |
-          signadot st run --sandbox=${SANDBOX_NAME} --publish
 
   sandbox-driver:
     runs-on: ubuntu-latest
@@ -329,3 +326,19 @@ jobs:
             --set namespace=${NAMESPACE} \
             -f - \
             < ${GITHUB_WORKSPACE}/.signadot/sbx-gh-template.yaml
+  run-contract-tests:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    needs: [ sandbox-driver, sandbox-location ]
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Run Contract Tests
+        run: |
+          echo "Running frontend and location contract tests after driver and location sandboxes are ready..."
+          signadot st run --sandbox=${SANDBOX_NAME} --publish
