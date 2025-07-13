@@ -86,12 +86,13 @@ jobs:
         run: |
           if [[ "${SIGNADOT_CLUSTER}" == "minikube" ]]; then
             echo "Using arm64 for minikube cluster"
-            echo "RELEASE_ARCHES=arm64" >> $GITHUB_ENV
+            ARCH=arm64
           else
             echo "Using amd64 for other clusters"
-            echo "RELEASE_ARCHES=amd64" >> $GITHUB_ENV
+            ARCH=amd64
           fi
-          echo "SANDBOX_IMAGE_TAG=${{ github.sha }}-linux-${RELEASE_ARCHES}" >> $GITHUB_ENV
+          echo "RELEASE_ARCHES=${ARCH}" >> $GITHUB_ENV
+          echo "SANDBOX_IMAGE_TAG=${{ github.sha }}-linux-${ARCH}" >> $GITHUB_ENV
       - name: Build and Push Docker Image
         env:
           RELEASE_TAG: ${{ github.sha }}
