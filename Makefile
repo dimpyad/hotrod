@@ -1,9 +1,9 @@
 GOOS ?= $(shell go env GOOS)
-GOARCH ?= $(shell go env GOARCH)
+GOARCH = arm64
 
 RELEASE_TAG ?= $(shell git describe --always)
 RELEASE_OSES ?= linux
-RELEASE_ARCHES = arm64
+RELEASE_ARCHES ?= amd64 arm64
 
 DOCKER ?= docker
 IMAGE_REGISTRY ?= docker.io/dimpyad
