@@ -96,7 +96,7 @@ jobs:
           RELEASE_TAG: ${{ github.sha }}
           RELEASE_ARCHES: ${{ env.RELEASE_ARCHES }}
         run: |
-          make push-docker
+          make push-docker RELEASE_ARCHES=$RELEASE_ARCHES
   
 
   sandbox-route:
