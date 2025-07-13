@@ -47,6 +47,7 @@ jobs:
     needs: [ changes ]
     env:
       DOCKER_CLI_EXPERIMENTAL: "enabled"
+      SIGNADOT_CLUSTER: ${{ secrets.SIGNADOT_CLUSTER }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -81,7 +82,15 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
+      - name: Set Architecture
+        run: |
+          if [[ "${SIGNADOT_CLUSTER}" == "minikube" ]]; then
+            echo "Using arm64 for minikube cluster"
+            echo "RELEASE_ARCHES=arm64" >> $GITHUB_ENV
+          else
+            echo "Using amd64 for other clusters"
+            echo "RELEASE_ARCHES=amd64" >> $GITHUB_ENV
+          fi
       - name: Build and Push Docker Image
         env:
           RELEASE_TAG: ${{ github.sha }}
