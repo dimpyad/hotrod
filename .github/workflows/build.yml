@@ -82,7 +82,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Set Architecture
+      - name: Set Architecture and Image Tag
         run: |
           if [[ "${SIGNADOT_CLUSTER}" == "minikube" ]]; then
             echo "Using arm64 for minikube cluster"
@@ -91,8 +91,12 @@ jobs:
             echo "Using amd64 for other clusters"
             ARCH=amd64
           fi
+      
           echo "RELEASE_ARCHES=${ARCH}" >> $GITHUB_ENV
-          echo "SANDBOX_IMAGE_TAG=${{ github.sha }}-linux-${ARCH}" >> $GITHUB_ENV
+          echo "SANDBOX_IMAGE_TAG=${GITHUB_SHA}-linux-${ARCH}" >> $GITHUB_ENV
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+
       - name: Build and Push Docker Image
         env:
           RELEASE_TAG: ${{ github.sha }}
