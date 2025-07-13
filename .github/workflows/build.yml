@@ -91,6 +91,7 @@ jobs:
             echo "Using amd64 for other clusters"
             echo "RELEASE_ARCHES=amd64" >> $GITHUB_ENV
           fi
+          echo "SANDBOX_IMAGE_TAG=${{ github.sha }}-linux-${RELEASE_ARCHES}" >> $GITHUB_ENV
       - name: Build and Push Docker Image
         env:
           RELEASE_TAG: ${{ github.sha }}
@@ -107,7 +108,6 @@ jobs:
       SIGNADOT_ORG: ${{ secrets.SIGNADOT_ORG }}
       SIGNADOT_CLUSTER: ${{ secrets.SIGNADOT_CLUSTER }} 
       SIGNADOT_API_KEY: ${{ secrets.SIGNADOT_API_KEY }}
-      SANDBOX_IMAGE_TAG: ${{ github.sha }}-linux-amd64
       SANDBOX_NAME: pr-${{ github.event.number }}-route
     steps:
       - uses: actions/checkout@v3
@@ -188,7 +188,6 @@ jobs:
       SIGNADOT_ORG: ${{ secrets.SIGNADOT_ORG }}
       SIGNADOT_CLUSTER: ${{ secrets.SIGNADOT_CLUSTER }} 
       SIGNADOT_API_KEY: ${{ secrets.SIGNADOT_API_KEY }}
-      SANDBOX_IMAGE_TAG: ${{ github.sha }}-linux-amd64
       SANDBOX_NAME: pr-${{ github.event.number }}-frontend
     steps:
       - uses: actions/checkout@v3
@@ -243,7 +242,6 @@ jobs:
       SIGNADOT_ORG: ${{ secrets.SIGNADOT_ORG }}
       SIGNADOT_CLUSTER: ${{ secrets.SIGNADOT_CLUSTER }} 
       SIGNADOT_API_KEY: ${{ secrets.SIGNADOT_API_KEY }}
-      SANDBOX_IMAGE_TAG: ${{ github.sha }}-linux-amd64
       SANDBOX_NAME: pr-${{ github.event.number }}-location
     steps:
       - uses: actions/checkout@v3
@@ -296,7 +294,6 @@ jobs:
       SIGNADOT_ORG: ${{ secrets.SIGNADOT_ORG }}
       SIGNADOT_CLUSTER: ${{ secrets.SIGNADOT_CLUSTER }} 
       SIGNADOT_API_KEY: ${{ secrets.SIGNADOT_API_KEY }}
-      SANDBOX_IMAGE_TAG: ${{ github.sha }}-linux-amd64
       SANDBOX_NAME: pr-${{ github.event.number }}-driver
     steps:
       - uses: actions/checkout@v3
