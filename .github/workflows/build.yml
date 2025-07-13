@@ -94,6 +94,7 @@ jobs:
       - name: Build and Push Docker Image
         env:
           RELEASE_TAG: ${{ github.sha }}
+          RELEASE_ARCHES: ${{ env.RELEASE_ARCHES }}
         run: |
           make push-docker
   
