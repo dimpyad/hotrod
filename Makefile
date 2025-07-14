@@ -1,5 +1,5 @@
 GOOS ?= $(shell go env GOOS)
-GOARCH = arm64
+GOARCH ?= $(shell go env GOARCH)
 
 RELEASE_TAG ?= $(shell git describe --always)
 RELEASE_OSES ?= linux
