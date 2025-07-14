@@ -48,6 +48,7 @@ jobs:
     env:
       DOCKER_CLI_EXPERIMENTAL: "enabled"
       SIGNADOT_CLUSTER: ${{ secrets.SIGNADOT_CLUSTER }}
+      RELEASE_ARCHES: ${{ secrets.RELEASE_ARCHES }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -82,25 +83,9 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Set Architecture and Image Tag
-        run: |
-          if [[ "${SIGNADOT_CLUSTER}" == "minikube" ]]; then
-            echo "Using arm64 for minikube cluster"
-            ARCH=arm64
-          else
-            echo "Using amd64 for other clusters"
-            ARCH=amd64
-          fi
-      
-          echo "RELEASE_ARCHES=${ARCH}" >> $GITHUB_ENV
-          echo "SANDBOX_IMAGE_TAG=${GITHUB_SHA}-linux-${ARCH}" >> $GITHUB_ENV
-        env:
-          GITHUB_SHA: ${{ github.sha }}
-
       - name: Build and Push Docker Image
         env:
           RELEASE_TAG: ${{ github.sha }}
-          RELEASE_ARCHES: ${{ env.RELEASE_ARCHES }}
         run: |
           make push-docker RELEASE_ARCHES=$RELEASE_ARCHES
   
@@ -114,7 +99,7 @@ jobs:
       SIGNADOT_CLUSTER: ${{ secrets.SIGNADOT_CLUSTER }} 
       SIGNADOT_API_KEY: ${{ secrets.SIGNADOT_API_KEY }}
       SANDBOX_NAME: pr-${{ github.event.number }}-route
-      SANDBOX_IMAGE_TAG: ${{ env.SANDBOX_IMAGE_TAG }}
+      SANDBOX_IMAGE_TAG: ${{ github.sha }}-linux-${{ secrets.RELEASE_ARCHES }}
     steps:
       - uses: actions/checkout@v3
 
@@ -195,7 +180,7 @@ jobs:
       SIGNADOT_CLUSTER: ${{ secrets.SIGNADOT_CLUSTER }} 
       SIGNADOT_API_KEY: ${{ secrets.SIGNADOT_API_KEY }}
       SANDBOX_NAME: pr-${{ github.event.number }}-frontend
-      SANDBOX_IMAGE_TAG: ${{ env.SANDBOX_IMAGE_TAG }}
+      SANDBOX_IMAGE_TAG: ${{ github.sha }}-linux-${{ secrets.RELEASE_ARCHES }}
     steps:
       - uses: actions/checkout@v3
 
@@ -250,7 +235,7 @@ jobs:
       SIGNADOT_CLUSTER: ${{ secrets.SIGNADOT_CLUSTER }} 
       SIGNADOT_API_KEY: ${{ secrets.SIGNADOT_API_KEY }}
       SANDBOX_NAME: pr-${{ github.event.number }}-location
-      SANDBOX_IMAGE_TAG: ${{ env.SANDBOX_IMAGE_TAG }}
+      SANDBOX_IMAGE_TAG: ${{ github.sha }}-linux-${{ secrets.RELEASE_ARCHES }}
     steps:
       - uses: actions/checkout@v3
 
@@ -303,7 +288,7 @@ jobs:
       SIGNADOT_CLUSTER: ${{ secrets.SIGNADOT_CLUSTER }} 
       SIGNADOT_API_KEY: ${{ secrets.SIGNADOT_API_KEY }}
       SANDBOX_NAME: pr-${{ github.event.number }}-driver
-      SANDBOX_IMAGE_TAG: ${{ env.SANDBOX_IMAGE_TAG }}
+      SANDBOX_IMAGE_TAG: ${{ github.sha }}-linux-${{ secrets.RELEASE_ARCHES }}
     steps:
       - uses: actions/checkout@v3
 
