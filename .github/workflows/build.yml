@@ -6,6 +6,16 @@ on:
       - 'v[0-9]+.[0-9]+.[0-9]+'
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      SIGNADOT_CLUSTER:
+        description: "Name of the Signadot cluster"
+        required: true
+        default: "minikube"
+      RELEASE_ARCHES:
+        description: "Target architectures (e.g., amd64, arm64)"
+        required: true
+        default: "arm64"
 env:
   GO_VERSION: "1.22"
 
@@ -47,8 +57,8 @@ jobs:
     needs: [ changes ]
     env:
       DOCKER_CLI_EXPERIMENTAL: "enabled"
-      SIGNADOT_CLUSTER: ${{ secrets.SIGNADOT_CLUSTER }}
-      RELEASE_ARCHES: ${{ secrets.RELEASE_ARCHES }}
+      SIGNADOT_CLUSTER: ${{ github.event.inputs.SIGNADOT_CLUSTER }}
+      RELEASE_ARCHES: ${{ github.event.inputs.RELEASE_ARCHES }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -98,10 +108,10 @@ jobs:
     needs: [ build, changes ]
     env:
       SIGNADOT_ORG: ${{ secrets.SIGNADOT_ORG }}
-      SIGNADOT_CLUSTER: ${{ secrets.SIGNADOT_CLUSTER }} 
       SIGNADOT_API_KEY: ${{ secrets.SIGNADOT_API_KEY }}
       SANDBOX_NAME: pr-${{ github.event.number }}-route
-      SANDBOX_IMAGE_TAG: ${{ github.sha }}-linux-${{ secrets.RELEASE_ARCHES }}
+      SIGNADOT_CLUSTER: ${{ github.event.inputs.SIGNADOT_CLUSTER }}
+      SANDBOX_IMAGE_TAG: ${{ github.sha }}-linux-${{ github.event.inputs.RELEASE_ARCHES }}
     steps:
       - uses: actions/checkout@v3
 
@@ -179,10 +189,10 @@ jobs:
     needs: [ build, changes ]
     env:
       SIGNADOT_ORG: ${{ secrets.SIGNADOT_ORG }}
-      SIGNADOT_CLUSTER: ${{ secrets.SIGNADOT_CLUSTER }} 
       SIGNADOT_API_KEY: ${{ secrets.SIGNADOT_API_KEY }}
       SANDBOX_NAME: pr-${{ github.event.number }}-frontend
-      SANDBOX_IMAGE_TAG: ${{ github.sha }}-linux-${{ secrets.RELEASE_ARCHES }}
+      SIGNADOT_CLUSTER: ${{ github.event.inputs.SIGNADOT_CLUSTER }}
+      SANDBOX_IMAGE_TAG: ${{ github.sha }}-linux-${{ github.event.inputs.RELEASE_ARCHES }}
     steps:
       - uses: actions/checkout@v3
 
@@ -234,10 +244,10 @@ jobs:
     needs: [ build, changes ]
     env:
       SIGNADOT_ORG: ${{ secrets.SIGNADOT_ORG }}
-      SIGNADOT_CLUSTER: ${{ secrets.SIGNADOT_CLUSTER }} 
       SIGNADOT_API_KEY: ${{ secrets.SIGNADOT_API_KEY }}
       SANDBOX_NAME: pr-${{ github.event.number }}-location
-      SANDBOX_IMAGE_TAG: ${{ github.sha }}-linux-${{ secrets.RELEASE_ARCHES }}
+      SIGNADOT_CLUSTER: ${{ github.event.inputs.SIGNADOT_CLUSTER }}
+      SANDBOX_IMAGE_TAG: ${{ github.sha }}-linux-${{ github.event.inputs.RELEASE_ARCHES }}
     steps:
       - uses: actions/checkout@v3
 
@@ -287,10 +297,10 @@ jobs:
     needs: [ build, changes ]
     env:
       SIGNADOT_ORG: ${{ secrets.SIGNADOT_ORG }}
-      SIGNADOT_CLUSTER: ${{ secrets.SIGNADOT_CLUSTER }} 
       SIGNADOT_API_KEY: ${{ secrets.SIGNADOT_API_KEY }}
       SANDBOX_NAME: pr-${{ github.event.number }}-driver
-      SANDBOX_IMAGE_TAG: ${{ github.sha }}-linux-${{ secrets.RELEASE_ARCHES }}
+      SIGNADOT_CLUSTER: ${{ github.event.inputs.SIGNADOT_CLUSTER }}
+      SANDBOX_IMAGE_TAG: ${{ github.sha }}-linux-${{ github.event.inputs.RELEASE_ARCHES }}
     steps:
       - uses: actions/checkout@v3
 
