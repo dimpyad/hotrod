@@ -86,8 +86,10 @@ jobs:
       - name: Build and Push Docker Image
         env:
           RELEASE_TAG: ${{ github.sha }}
+          GOARCH: ${{ env.RELEASE_ARCHES }} 
+          GOOS: linux
         run: |
-          make push-docker RELEASE_ARCHES=$RELEASE_ARCHES
+          make push-docker GOOS=$GOOS GOARCH=$GOARCH
   
 
   sandbox-route:
