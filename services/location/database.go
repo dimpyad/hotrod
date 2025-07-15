@@ -242,10 +242,42 @@ func (d *database) shouldRetry(err error) bool {
 }
 
 func (d *database) setupDB() {
-	fmt.Println("creating locations table")
+	fmt.Println("ensuring locations table exists")
 	_, err := d.db.Exec(tableSchema)
 	if err != nil {
 		panic(err)
+	}
+
+	fmt.Println("checking if 'zone' column exists")
+	var columnName string
+	err = d.db.QueryRow(`
+		SELECT COLUMN_NAME
+		FROM INFORMATION_SCHEMA.COLUMNS
+		WHERE TABLE_NAME = 'locations' AND COLUMN_NAME = 'zone'
+	`).Scan(&columnName)
+
+	if err == sql.ErrNoRows {
+		fmt.Println("'zone' column missing — altering table")
+		_, err := d.db.Exec(`ALTER TABLE locations ADD COLUMN zone VARCHAR(255) DEFAULT NULL`)
+		if err != nil {
+			panic(fmt.Sprintf("failed to alter table: %v", err))
+		}
+	} else if err != nil {
+		panic(fmt.Sprintf("failed to check schema: %v", err))
+	} else {
+		fmt.Println("'zone' column exists")
+	}
+
+	fmt.Println("checking if seed data exists")
+	var count int
+	err = d.db.QueryRow(`SELECT COUNT(*) FROM locations`).Scan(&count)
+	if err != nil {
+		panic(fmt.Sprintf("failed to count rows in locations: %v", err))
+	}
+
+	if count > 0 {
+		fmt.Printf("locations table already has %d rows, skipping seeding\n", count)
+		return
 	}
 
 	fmt.Println("seeding database")
@@ -253,12 +285,13 @@ func (d *database) setupDB() {
 	if err != nil {
 		panic(err)
 	}
+	defer stmt.Close()
+
 	for _, c := range seed {
 		if _, err := stmt.Exec(c.ID, c.Name, c.Coordinates, c.Zone); err != nil {
-			panic(err)
+			panic(fmt.Sprintf("error seeding row: %v", err))
 		}
 	}
-	stmt.Close()
 }
 
 // helper to convert sql.NullString to plain string
