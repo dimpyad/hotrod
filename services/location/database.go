@@ -79,13 +79,17 @@ func newDatabase(logger log.Factory) *database {
 		<-ticker.C
 	}
 
-	return &database{
+	d := &database{
 		tracer: tracing.InitOTEL("mysql", config.GetOtelExporterType(),
 			config.GetMetricsFactory(), logger).Tracer("mysql"),
 		logger: logger,
 		lock:   &tracing.Mutex{SessionBaggageKey: "request"},
 		db:     db,
 	}
+
+	d.setupDB()
+
+	return d
 }
 
 func driverConfig() *mysql.Config {
