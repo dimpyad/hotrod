@@ -1,0 +1,23 @@
+# Ignore VCS metadata
+.git
+.gitignore
+
+# Ignore IDE/editor folders
+.vscode
+.idea
+
+# Ignore OS-generated files
+.DS_Store
+Thumbs.db
+
+# Ignore logs and temp files
+*.log
+*.tmp
+*.swp
+
+# Ignore Go build cache (optional)
+bin/
+pkg/
+
+# DO NOT ignore the dist/ folder — we need it in Docker build context!
+# dist/

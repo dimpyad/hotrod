@@ -62,7 +62,7 @@ func (s *driverStore) FindDriverIDs(ctx context.Context) []string {
 		drivers[i] = fmt.Sprintf("%sT7%05dC%s",
 			config.GetDriverIDPrefix(), rand.Int()%100000, config.GetDriverIDSuffix())
 	}
-	s.logger.For(ctx).Info("Found drivers", zap.Strings("drivers", drivers))
+	s.logger.For(ctx).Info("Found nearest drivers for you, we will assign the accepted one right now.", zap.Strings("drivers", drivers))
 	return drivers
 }
 

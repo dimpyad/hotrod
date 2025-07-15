@@ -27,7 +27,7 @@ type bestETA struct {
 
 // Response contains ETA for a trip.
 type Response struct {
-	DriverID string
+	DriverID string        `json:"driverIdentifier"` // 🔥 Changed from `driverID`
 	ETA      time.Duration
 }
 

@@ -17,6 +17,7 @@ package location
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -47,6 +48,7 @@ CREATE TABLE IF NOT EXISTS locations
     id bigint unsigned NOT NULL AUTO_INCREMENT,
     name varchar(255) NOT NULL,
     coordinates varchar(255) NOT NULL,
+    zone varchar(255) DEFAULT NULL,
 
     PRIMARY KEY (id),
 	UNIQUE KEY name (name)
@@ -54,40 +56,18 @@ CREATE TABLE IF NOT EXISTS locations
 `
 
 var seed = []Location{
-	{
-		ID:          1,
-		Name:        "My Home",
-		Coordinates: "231,773",
-	},
-	{
-		ID:          123,
-		Name:        "Rachel's Floral Designs",
-		Coordinates: "115,277",
-	},
-	{
-		ID:          567,
-		Name:        "Amazing Coffee Roasters",
-		Coordinates: "211,653",
-	},
-	{
-		ID:          392,
-		Name:        "Trom Chocolatier",
-		Coordinates: "577,322",
-	},
-	{
-		ID:          731,
-		Name:        "Japanese Desserts",
-		Coordinates: "728,326",
-	},
+	{ID: 1, Name: "My Home", Coordinates: "231,773", Zone: "green-zone"},
+	{ID: 123, Name: "Rachel's Floral Designs", Coordinates: "115,277", Zone: "red-zone"},
+	{ID: 567, Name: "Amazing Coffee Roasters", Coordinates: "211,653", Zone: "yellow-zone"},
+	{ID: 392, Name: "Trom Chocolatier", Coordinates: "577,322", Zone: "purple-zone"},
+	{ID: 731, Name: "Japanese Desserts", Coordinates: "728,326", Zone: "blue-zone"},
 }
 
 func newDatabase(logger log.Factory) *database {
 	logger = logger.With(zap.String("component", "database"))
 
-	var (
-		db  *sqlx.DB
-		err error
-	)
+	var db *sqlx.DB
+	var err error
 	ticker := time.NewTicker(time.Second / 3)
 	defer ticker.Stop()
 	for {
@@ -99,15 +79,17 @@ func newDatabase(logger log.Factory) *database {
 		<-ticker.C
 	}
 
-	return &database{
+	d := &database{
 		tracer: tracing.InitOTEL("mysql", config.GetOtelExporterType(),
 			config.GetMetricsFactory(), logger).Tracer("mysql"),
 		logger: logger,
-		lock: &tracing.Mutex{
-			SessionBaggageKey: "request",
-		},
-		db: db,
+		lock:   &tracing.Mutex{SessionBaggageKey: "request"},
+		db:     db,
 	}
+
+	d.setupDB()
+
+	return d
 }
 
 func driverConfig() *mysql.Config {
@@ -129,18 +111,15 @@ func driverConfig() *mysql.Config {
 
 func (d *database) List(ctx context.Context) ([]Location, error) {
 	d.logger.For(ctx).Info("Loading locations", zap.String("location-id", "*"))
-	// simulate opentracing instrumentation of an SQL query
 
 	_, span := d.tracer.Start(ctx, "SQL SELECT", trace.WithSpanKind(trace.SpanKindClient))
 	span.SetAttributes(
 		semconv.PeerServiceKey.String("mysql"),
-		attribute.
-			Key("sql.query").
-			String("SELECT id, name, coordinates FROM locations"),
+		attribute.Key("sql.query").String("SELECT id, name, coordinates, zone FROM locations"),
 	)
 	defer span.End()
 
-	query := "SELECT id, name, coordinates FROM locations"
+	query := "SELECT id, name, coordinates, zone FROM locations"
 	rows, err := d.db.Query(query)
 	if err != nil {
 		if !d.shouldRetry(err) {
@@ -152,48 +131,55 @@ func (d *database) List(ctx context.Context) ([]Location, error) {
 		}
 	}
 	defer rows.Close()
-	var cs []Location
+
+	var results []Location
 	for rows.Next() {
-		c := Location{}
-		if err := rows.Scan(&c.ID, &c.Name, &c.Coordinates); err != nil {
+		var id int64
+		var name, coordinates string
+		var zone sql.NullString
+
+		if err := rows.Scan(&id, &name, &coordinates, &zone); err != nil {
 			return nil, err
 		}
-		cs = append(cs, c)
+
+		results = append(results, Location{
+			ID:          id,
+			Name:        name,
+			Coordinates: coordinates,
+			Zone:        nullStringToString(zone),
+		})
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 
-	return cs, nil
+	return results, nil
 }
 
 func (d *database) Create(ctx context.Context, location *Location) (int64, error) {
-	query := "INSERT INTO locations SET name = ?, coordinates = ?"
-	res, err := d.db.Exec(query, location.Name, location.Coordinates)
+	query := "INSERT INTO locations SET name = ?, coordinates = ?, zone = ?"
+	res, err := d.db.Exec(query, location.Name, location.Coordinates, nullable(location.Zone))
 	if err != nil {
 		if !d.shouldRetry(err) {
 			return 0, err
 		}
-		res, err = d.db.Exec(query, location.Name, location.Coordinates)
+		res, err = d.db.Exec(query, location.Name, location.Coordinates, nullable(location.Zone))
 		if err != nil {
 			return 0, err
 		}
 	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		return 0, err
-	}
-	return id, nil
+	return res.LastInsertId()
 }
 
 func (d *database) Update(ctx context.Context, location *Location) error {
-	query := "UPDATE locations SET name = ?, coordinates = ? WHERE id = ?"
-	res, err := d.db.Exec(query, location.Name, location.Coordinates, location.ID)
+	query := "UPDATE locations SET name = ?, coordinates = ?, zone = ? WHERE id = ?"
+	res, err := d.db.Exec(query, location.Name, location.Coordinates, nullable(location.Zone), location.ID)
 	if err != nil {
 		if !d.shouldRetry(err) {
 			return err
 		}
-		res, err = d.db.Exec(query, location.Name, location.Coordinates, location.ID)
+		res, err = d.db.Exec(query, location.Name, location.Coordinates, nullable(location.Zone), location.ID)
 		if err != nil {
 			return err
 		}
@@ -214,56 +200,44 @@ func (d *database) Get(ctx context.Context, locationID int) (*Location, error) {
 	_, span := d.tracer.Start(ctx, "SQL SELECT", trace.WithSpanKind(trace.SpanKindClient))
 	span.SetAttributes(
 		semconv.PeerServiceKey.String("mysql"),
-		attribute.
-			Key("sql.query").
-			String(fmt.Sprintf("SELECT id, name, coordinates from locations WHERE id = %d", locationID)),
+		attribute.Key("sql.query").String(fmt.Sprintf("SELECT id, name, coordinates, zone FROM locations WHERE id = %d", locationID)),
 	)
 	defer span.End()
 
-	// if !config.MySQLMutexDisabled {
-	// 	// simulate misconfigured connection pool that only gives one connection at a time
-	// 	d.lock.Lock(ctx)
-	// 	defer d.lock.Unlock()
-	// }
-
-	// simulate RPC delay
 	delay.Sleep(config.GetMySQLGetDelay(), config.GetMySQLGetDelayStdDev())
 
-	var c Location
-	query := "SELECT id, name, coordinates FROM locations WHERE id = ?"
+	query := "SELECT id, name, coordinates, zone FROM locations WHERE id = ?"
 	row := d.db.QueryRow(query, locationID)
-	if row.Err() != nil {
-		if !d.shouldRetry(row.Err()) {
-			return nil, row.Err()
-		}
-		row = d.db.QueryRow(query, locationID)
-		if row.Err() != nil {
-			return nil, row.Err()
-		}
-	}
-	if err := row.Scan(&c.ID, &c.Name, &c.Coordinates); err != nil {
+
+	var id int64
+	var name, coordinates string
+	var zone sql.NullString
+
+	if err := row.Scan(&id, &name, &coordinates, &zone); err != nil {
 		return nil, err
 	}
-	return &c, nil
+
+	return &Location{
+		ID:          id,
+		Name:        name,
+		Coordinates: coordinates,
+		Zone:        nullStringToString(zone),
+	}, nil
 }
 
 func (d *database) Delete(ctx context.Context, locationID int) error {
 	query := "DELETE FROM locations WHERE id = ?"
 	_, err := d.db.Exec(query, locationID)
-	if err != nil {
-		if !d.shouldRetry(err) {
-			return err
-		}
-		err = nil
+	if err != nil && !d.shouldRetry(err) {
+		return err
 	}
-	return err
+	return nil
 }
 
 func (d *database) shouldRetry(err error) bool {
 	if mysqlErr, ok := err.(*mysql.MySQLError); ok {
 		switch mysqlErr.Number {
-		case 1146:
-			// this is a "Table doesn't exist"
+		case 1146: // Table doesn't exist
 			d.setupDB()
 			return true
 		}
@@ -272,23 +246,70 @@ func (d *database) shouldRetry(err error) bool {
 }
 
 func (d *database) setupDB() {
-	// Create the table
-	fmt.Println("creating locations table")
+	fmt.Println("ensuring locations table exists")
 	_, err := d.db.Exec(tableSchema)
 	if err != nil {
 		panic(err)
 	}
 
+	fmt.Println("checking if 'zone' column exists")
+	var columnName string
+	err = d.db.QueryRow(`
+		SELECT COLUMN_NAME
+		FROM INFORMATION_SCHEMA.COLUMNS
+		WHERE TABLE_NAME = 'locations' AND COLUMN_NAME = 'zone'
+	`).Scan(&columnName)
+
+	if err == sql.ErrNoRows {
+		fmt.Println("'zone' column missing — altering table")
+		_, err := d.db.Exec(`ALTER TABLE locations ADD COLUMN zone VARCHAR(255) DEFAULT NULL`)
+		if err != nil {
+			panic(fmt.Sprintf("failed to alter table: %v", err))
+		}
+	} else if err != nil {
+		panic(fmt.Sprintf("failed to check schema: %v", err))
+	} else {
+		fmt.Println("'zone' column exists")
+	}
+
+	fmt.Println("checking if seed data exists")
+	var count int
+	err = d.db.QueryRow(`SELECT COUNT(*) FROM locations`).Scan(&count)
+	if err != nil {
+		panic(fmt.Sprintf("failed to count rows in locations: %v", err))
+	}
+
+	if count > 0 {
+		fmt.Printf("locations table already has %d rows, skipping seeding\n", count)
+		return
+	}
+
 	fmt.Println("seeding database")
-	stmt, err := d.db.Prepare("INSERT INTO locations (id, name, coordinates) VALUES (?, ?, ?)")
+	stmt, err := d.db.Prepare("INSERT INTO locations (id, name, coordinates, zone) VALUES (?, ?, ?, ?)")
 	if err != nil {
 		panic(err)
 	}
-	for i := range seed {
-		c := &seed[i]
-		if _, err := stmt.Exec(c.ID, c.Name, c.Coordinates); err != nil {
-			panic(err)
+	defer stmt.Close()
+
+	for _, c := range seed {
+		if _, err := stmt.Exec(c.ID, c.Name, c.Coordinates, c.Zone); err != nil {
+			panic(fmt.Sprintf("error seeding row: %v", err))
 		}
 	}
-	stmt.Close()
+}
+
+// helper to convert sql.NullString to plain string
+func nullStringToString(ns sql.NullString) string {
+	if ns.Valid {
+		return ns.String
+	}
+	return ""
+}
+
+// helper to convert string to interface{} with null support
+func nullable(s string) interface{} {
+	if s == "" {
+		return nil
+	}
+	return s
 }

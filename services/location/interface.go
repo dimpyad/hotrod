@@ -24,6 +24,7 @@ type Location struct {
 	ID          int64  `json:"id"`
 	Name        string `json:"name"`
 	Coordinates string `json:"coordinates"`
+	Zone      string  `json:"zone"`
 }
 
 // Interface exposed by the Location service.
